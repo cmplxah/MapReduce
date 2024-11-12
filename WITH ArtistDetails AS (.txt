@@ -1,0 +1,60 @@
+WITH ArtistDetails AS (
+    SELECT 
+        Artist1,
+        YEAR(Release) AS ReleaseYear,
+        AVG(Popularity) AS AvgPopularity,
+        AVG(Energy) AS AvgEnergy,
+        AVG(Valence) AS AvgValence,
+        AVG(Danceability) AS AvgDanceability,
+        COUNT(*) AS TotalSongs
+    FROM 
+        spotify_top_100
+    GROUP BY 
+        Artist1, YEAR(Release)
+    HAVING 
+        COUNT(*) >= 3 
+        AND AVG(Popularity) > 60 
+        AND AVG(Energy) > 0.5
+        AND AVG(Valence) BETWEEN 0.4 AND 0.7
+)
+SELECT 
+    a.Artist1,
+    a.Track,
+    b.ReleaseYear,
+    b.AvgPopularity,
+    b.TotalSongs,
+    CASE 
+        WHEN a.Energy > 0.8 THEN 
+            CASE 
+                WHEN a.Danceability > 0.7 THEN 'High Energy & Danceable'
+                WHEN a.Danceability BETWEEN 0.5 AND 0.7 THEN 'High Energy & Moderate Danceability'
+                ELSE 'High Energy & Low Danceability'
+            END
+        WHEN a.Energy BETWEEN 0.5 AND 0.8 THEN 
+            CASE 
+                WHEN a.Valence > 0.6 THEN 'Moderate Energy & Positive Vibes'
+                WHEN a.Valence BETWEEN 0.4 AND 0.6 THEN 'Moderate Energy & Neutral Vibes'
+                ELSE 'Moderate Energy & Low Vibes'
+            END
+        ELSE 
+            CASE 
+                WHEN a.Danceability > 0.6 THEN 'Low Energy & Danceable'
+                ELSE 'Low Energy & Low Danceability'
+            END
+    END AS EnergyDanceCategory,
+    CASE 
+        WHEN a.Popularity > 80 THEN 'Very Popular'
+        WHEN a.Popularity BETWEEN 60 AND 80 THEN 'Popular'
+        ELSE 'Less Popular'
+    END AS PopularityCategory
+FROM 
+    spotify_top_100 a
+JOIN 
+    ArtistDetails b ON a.Artist1 = b.Artist1 AND YEAR(a.Release) = b.ReleaseYear
+WHERE 
+    a.Danceability > 0.4 
+    AND a.Valence > 0.3 
+    AND a.Duration > 180
+    AND a.Popularity > 50
+ORDER BY 
+    b.ReleaseYear DESC, b.AvgPopularity DESC, EnergyDanceCategory;
