@@ -1,0 +1,11 @@
+WITH PopularArtists AS (
+SELECT Artist1, YEAR(Release) AS ReleaseYear, AVG(Popularity) AS AvgPopularity, COUNT(*) AS TotalSongs, AVG(Energy) AS AvgEnergy, COUNT(DISTINCT Key) AS UniqueKeys
+FROM spotify_top_100
+WHERE Popularity > 70 AND Danceability > 0.5
+GROUP BY Artist1, YEAR(Release)
+HAVING COUNT(*) >= 5 AND AVG(Energy) > 0.6 AND COUNT(DISTINCT Key) > 3)
+SELECT a.Artist1,a.Track,a.Release,a.Popularity,a.Energy,a.Danceability, b.ReleaseYear, b.AvgPopularity, b.TotalSongs, b.UniqueKeys
+FROM spotify_top_100 a
+JOIN PopularArtists b ON a.Artist1 = b.Artist1 AND YEAR(a.Release) = b.ReleaseYear
+WHERE a.Popularity > 70 AND a.Danceability > 0.5 AND a.Energy > 0.6 AND a.Valence BETWEEN 0.4 AND 0.7
+ORDER BY b.ReleaseYear DESC, b.AvgPopularity DESC, a.Popularity DESC;
